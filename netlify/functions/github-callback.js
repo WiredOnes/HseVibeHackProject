@@ -1,26 +1,36 @@
-export async function handler(event) {
+exports.handler = async function(event) {
+  try {
+    const code = event.queryStringParameters?.code;
 
-    const code = event.queryStringParameters.code
-  
-    const response = await fetch(`http://jiodsmgksd.duckdns.org/oauth/callback?code=${code}`, {
-      method: "GET"
-    })
-  
-    const data = await response.json()
-    console.log(data)
-  
-    if (!data.access_token) {
+    if (!code) {
       return {
-        statusCode: 302,
-        headers: { Location: "/" }
-      }
+        statusCode: 400,
+        body: JSON.stringify({ error: "Missing code parameter" })
+      };
     }
-  
+
+    const response = await fetch(
+      `https://jiodsmgksd.duckdns.org/oauth/callback?code=${encodeURIComponent(code)}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json"
+        }
+      }
+    );
+
+    // Парсим ответ от сервера
+    const data = await response.json();
+
     return {
-      statusCode: 302,
-      headers: {
-        "Set-Cookie": `github_token=${data.access_token}; HttpOnly; Secure; SameSite=Lax; Path=/`,
-        Location: "/dashboard"
-      }
-    }
+      statusCode: 200,
+      body: JSON.stringify(data)
+    };
+
+  } catch (err) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: err.message })
+    };
   }
+};
