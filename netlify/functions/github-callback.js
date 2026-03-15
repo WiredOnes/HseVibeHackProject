@@ -5,7 +5,7 @@ export async function handler(event) {
     const response = await fetch("https://github.com/login/oauth/access_token", {
       method: "POST",
       headers: {
-        Accept: "application/json",
+        "Accept": "application/json",
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -16,6 +16,7 @@ export async function handler(event) {
     })
   
     const data = await response.json()
+    console.log(data)
   
     if (!data.access_token) {
       return {
