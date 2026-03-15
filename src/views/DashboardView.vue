@@ -89,7 +89,9 @@ export default {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+
           }
         });
 
@@ -136,6 +138,10 @@ export default {
 </script>
 
 <style scoped>
+* {
+    margin: 0;
+    padding: 0;
+}
 /* Основной фон - темно-синий, почти черный, как на скриншоте */
 .dashboard-container {
   background-color: #0f172a; /* Slate 900 */
