@@ -12,7 +12,10 @@ const REDIRECT_URI = 'https://hsehackvibeproject.netlify.app/api/auth/github/cal
 
 export const useAuthStore = defineStore("auth", () => {
 
-  const isAuthenticated = ref(false)
+  const accessToken = ref(localStorage.getItem('github_access_token'))
+  const isAuthenticated = ref(!!accessToken.value)
+
+  // const isAuthenticated = ref(false)
 
   async function checkAuth() {
 

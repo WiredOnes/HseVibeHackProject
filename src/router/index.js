@@ -1,20 +1,17 @@
-// import { createRouter, createWebHistory } from 'vue-router'
-// import { useAuthStore } from '@/stores/auth' // ваш Pinia store
 
-// // ваши маршруты
+// import { createRouter, createWebHistory } from "vue-router"
+// import { useAuthStore } from "@/stores/auth"
+
 // const routes = [
-//   { path: '/', name: 'home', component: () => import('@/views/HomeView.vue') },
-//   { path: '/dashboard', name: 'dashboard', component: () => import('@/views/DashboardView.vue'), meta: { requiresAuth: true } },
-//   // ... другие защищённые маршруты с meta: { requiresAuth: true }
-
-//   // ← Специальный маршрут для callback (можно даже без компонента)
 //   {
-//     path: '/api/auth/github/callback',
-//     name: 'github-callback',
-//     component: { template: '<div>Обработка авторизации...</div>' }
+//     path: "/",
+//     component: () => import("@/views/HomeView.vue")
 //   },
-
-//   { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFound.vue') }
+//   {
+//     path: "/dashboard",
+//     component: () => import("@/views/DashboardView.vue"),
+//     meta: { requiresAuth: true }
+//   }
 // ]
 
 // const router = createRouter({
@@ -22,44 +19,18 @@
 //   routes
 // })
 
-
 // router.beforeEach(async (to, from, next) => {
-//   const authStore = useAuthStore()
 
-//   // ---- GITHUB CALLBACK ----
-//   if (to.path === '/api/auth/github/callback') {
-//     const code = to.query.code
-//     const state = to.query.state
-//     const error = to.query.error
+//   const auth = useAuthStore()
 
-//     if (error) {
-//       console.error('GitHub ошибка:', error)
-//       return next('/')
-//     }
+//   await auth.checkAuth()
 
-//     if (code) {
-//       try {
-//         await authStore.exchangeCodeForToken(code, state)
-
-//         // после успешной авторизации
-//         return next('/dashboard')
-//       } catch (err) {
-//         console.error('Ошибка обмена code → token:', err)
-//         return next('/')
-//       }
-//     }
-
-//     return next('/')
+//   if (to.meta.requiresAuth && !auth.isAuthenticated) {
+//     return next("/")
 //   }
 
-//   // ---- ЕСЛИ ЕСТЬ TOKEN И ОТКРЫВАЮТ "/" ----
-//   if (to.path === '/' && authStore.isAuthenticated) {
-//     return next('/dashboard')
-//   }
-
-//   // ---- ЕСЛИ НЕТ TOKEN И ОТКРЫВАЮТ DASHBOARD ----
-//   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-//     return next('/')
+//   if (to.path === "/" && auth.isAuthenticated) {
+//     return next("/dashboard")
 //   }
 
 //   next()
@@ -67,19 +38,13 @@
 
 // export default router
 
-import { createRouter, createWebHistory } from "vue-router"
-import { useAuthStore } from "@/stores/auth"
+
+import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const routes = [
-  {
-    path: "/",
-    component: () => import("@/views/HomeView.vue")
-  },
-  {
-    path: "/dashboard",
-    component: () => import("@/views/DashboardView.vue"),
-    meta: { requiresAuth: true }
-  }
+  { path: '/', component: () => import('@/views/HomeView.vue') },
+  { path: '/dashboard', component: () => import('@/views/DashboardView.vue'), meta: { requiresAuth: true } }
 ]
 
 const router = createRouter({
@@ -88,17 +53,48 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore()
 
-  const auth = useAuthStore()
+  // 1️⃣ Если GitHub вернул code
+  const code = to.query.code
+  if (code) {
+    try {
+      // Отправляем code на твой сервер
+      const res = await fetch(`https://jiodsmgksd.duckdns.org/oauth/callback?code=${encodeURIComponent(code)}`, {
+        method: 'GET',
+        headers: { Accept: 'application/json' }
+      })
 
-  await auth.checkAuth()
+      let data
+      try {
+        data = await res.json() // сервер должен вернуть JSON с access_token
+      } catch {
+        return next('/') // если сервер не JSON → редирект на /
+      }
 
-  if (to.meta.requiresAuth && !auth.isAuthenticated) {
-    return next("/")
+      if (data.access_token) {
+        localStorage.setItem('github_access_token', data.access_token)
+        // Очищаем query и редирект на dashboard
+        return next({ path: '/dashboard', replace: true })
+      } else {
+        return next('/') // токена нет → редирект на /
+      }
+
+    } catch (err) {
+      console.error('OAuth server error:', err)
+      return next('/')
+    }
   }
 
-  if (to.path === "/" && auth.isAuthenticated) {
-    return next("/dashboard")
+  // 2️⃣ Защита dashboard
+  const token = localStorage.getItem('github_access_token')
+  if (to.meta.requiresAuth && !token) {
+    return next('/')
+  }
+
+  // 3️⃣ Если токен есть и открывают главную
+  if (to.path === '/' && token) {
+    return next('/dashboard')
   }
 
   next()
