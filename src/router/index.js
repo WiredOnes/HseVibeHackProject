@@ -1,5 +1,8 @@
 
+
+
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const routes = [
   { path: '/', component: () => import('@/views/HomeView.vue') },
@@ -12,7 +15,11 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  if (to.query.code) {
+  const authStore = useAuthStore()
+
+  // 1️⃣ Если GitHub вернул code
+  const code = to.query.code
+  if (code) {
     try {
       // Отправляем code на твой сервер
       const res = await fetch(`https://jiodsmgksd.duckdns.org/oauth/callback?code=${encodeURIComponent(code)}`, {
@@ -20,30 +27,35 @@ router.beforeEach(async (to, from, next) => {
         headers: { Accept: 'application/json' }
       })
 
+      let data
       try {
-        let data = await res.json()
+        data = await res.json() // сервер должен вернуть JSON с access_token
         console.log(data)
-
-        if (data.token) {
-          localStorage.setItem('github_access_token', data.token)
-          return next({ path: '/dashboard', replace: true })
-        } else {
-          return next('/')
-        }
       } catch {
-        return next('/')
+        return next('/') // если сервер не JSON → редирект на /
       }
+
+      if (data.token) {
+        localStorage.setItem('github_access_token', data.token)
+        // Очищаем query и редирект на dashboard
+        return next({ path: '/dashboard', replace: true })
+      } else {
+        return next('/') // токена нет → редирект на /
+      }
+
     } catch (err) {
       console.error('OAuth server error:', err)
       return next('/')
     }
   }
 
+  // 2️⃣ Защита dashboard
   const token = localStorage.getItem('github_access_token')
   if (to.meta.requiresAuth && !token) {
     return next('/')
   }
 
+  // 3️⃣ Если токен есть и открывают главную
   if (to.path === '/' && token) {
     return next('/dashboard')
   }
