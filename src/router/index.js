@@ -67,17 +67,17 @@
 
 // export default router
 
-import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { createRouter, createWebHistory } from "vue-router"
+import { useAuthStore } from "@/stores/auth"
 
 const routes = [
   {
-    path: '/',
-    component: () => import('@/views/HomeView.vue')
+    path: "/",
+    component: () => import("@/views/HomeView.vue")
   },
   {
-    path: '/dashboard',
-    component: () => import('@/views/DashboardView.vue'),
+    path: "/dashboard",
+    component: () => import("@/views/DashboardView.vue"),
     meta: { requiresAuth: true }
   }
 ]
@@ -89,47 +89,16 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
 
-  const authStore = useAuthStore()
+  const auth = useAuthStore()
 
-  const code = to.query.code
+  await auth.checkAuth()
 
-  // 1️⃣ Если GitHub вернул code
-  if (code) {
-    try {
-
-      const res = await fetch('/.netlify/functions/github-callback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ code })
-      })
-
-      const data = await res.json()
-
-      if (data.access_token) {
-        localStorage.setItem('github_access_token', data.access_token)
-      }
-
-      // очищаем query и идём в dashboard
-      return next({ path: '/dashboard', replace: true })
-
-    } catch (err) {
-      console.error('OAuth error:', err)
-      return next('/')
-    }
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    return next("/")
   }
 
-  // 2️⃣ если пользователь уже авторизован
-  const token = localStorage.getItem('github_access_token')
-
-  if (to.path === '/' && token) {
-    return next('/dashboard')
-  }
-
-  // 3️⃣ защита dashboard
-  if (to.meta.requiresAuth && !token) {
-    return next('/')
+  if (to.path === "/" && auth.isAuthenticated) {
+    return next("/dashboard")
   }
 
   next()
