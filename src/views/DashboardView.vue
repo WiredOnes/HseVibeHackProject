@@ -88,7 +88,6 @@ export default {
         const response = await fetch(`https://jiodsmgksd.duckdns.org/repositories`, {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Authorization': `Bearer ${token}`,
 
@@ -147,7 +146,6 @@ export default {
   background-color: #0f172a; /* Slate 900 */
   min-height: 100vh;
   color: #ffffff;
-  padding: 2rem 1rem;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
