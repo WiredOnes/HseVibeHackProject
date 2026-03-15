@@ -22,48 +22,47 @@ const router = createRouter({
   routes
 })
 
-// router.beforeEach(async (to, from, next) => {
-//   console.log(".....")
-//   const authStore = useAuthStore()
 
-//   if (to.path === '/api/auth/github/callback' || to.name === 'github-callback') {
-//     const code = to.query.code
-//     const state = to.query.state
-//     const error = to.query.error
+router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore()
 
-//     if (error) {  
-//       console.error('GitHub ошибка:', error, to.query.error_description)
-//       return next({ path: '/', query: { auth: 'error' } })
-//     }
+  // ---- GITHUB CALLBACK ----
+  if (to.path === '/api/auth/github/callback') {
+    const code = to.query.code
+    const state = to.query.state
+    const error = to.query.error
 
-//     if (code) {
-//       try {
-//         await authStore.exchangeCodeForToken(code, state)
-//         // Успех → чистый редирект на главную без мусора в URL
-//         return next({ path: '/', replace: true })
-//       } catch (err) {
-//         console.error('Ошибка обмена code → token:', err)
-//         return next({ path: '/', query: { auth: 'failed' } })
-//       }
-//     }
+    if (error) {
+      console.error('GitHub ошибка:', error)
+      return next('/')
+    }
 
-//     // если code нет — просто на главную
-//     return next({ path: '/', replace: true })
-//   }
+    if (code) {
+      try {
+        await authStore.exchangeCodeForToken(code, state)
 
-//   // 2. Защищённые маршруты
-//   if (to.meta.requiresAuth) {
-//     if (!authStore.isAuthenticated) {
-//       // Нет токена → сразу на GitHub авторизацию
-//       authStore.loginWithGitHub()
-//       return // прерываем навигацию — дальше уже не идём
-//     }
-//     // Токен есть → продолжаем
-//     return next()
-//   }
+        // после успешной авторизации
+        return next('/dashboard')
+      } catch (err) {
+        console.error('Ошибка обмена code → token:', err)
+        return next('/')
+      }
+    }
 
-//   // Всё остальное — публичные маршруты
-//   next()
-// })
+    return next('/')
+  }
+
+  // ---- ЕСЛИ ЕСТЬ TOKEN И ОТКРЫВАЮТ "/" ----
+  if (to.path === '/' && authStore.isAuthenticated) {
+    return next('/dashboard')
+  }
+
+  // ---- ЕСЛИ НЕТ TOKEN И ОТКРЫВАЮТ DASHBOARD ----
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    return next('/')
+  }
+
+  next()
+})
 
 export default router
