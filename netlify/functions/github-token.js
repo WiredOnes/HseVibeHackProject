@@ -8,8 +8,8 @@ export async function handler(event) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        client_id: import.meta.env.VITE_GITHUB_CLIENT_ID,
-        client_secret: import.meta.env.VITE_CLIENT_SECRET,
+        client_id: process.env.VITE_GITHUB_CLIENT_ID,
+        client_secret: process.env.VITE_CLIENT_SECRET,
         code
       })
     })
