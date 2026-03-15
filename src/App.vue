@@ -1,7 +1,9 @@
 <script setup>
+import { useAuthStore } from "@/stores/auth"
+const store = useAuthStore()
 
-const auth = () => {
- 
+const auth = async () => {
+ await store.loginWithGitHub()
 }
 
 </script>

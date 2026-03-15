@@ -1,17 +1,22 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 
+import { useRouter } from "vue-router";
+
+
 export const useAuthStore = defineStore('auth', () => {
-  const GITHUB_CLIENT_ID = "Iv23liS8YODf6phtTGQR";
-  const REDIRECT_URI = "http://localhost:5173/api/auth/github/callback";
+  const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
+  const REDIRECT_URI = "https://hsehackvibeproject.netlify.app/api/auth/github/callback";
   
+    const router = useRouter()
+
   function generateCodeVerifier() {
     const array = new Uint32Array(56 / 2);
     crypto.getRandomValues(array);
     return Array.from(array, dec => ('0' + dec.toString(16)).substr(-2)).join('');
   }
   
-  function generateCodeChallenge(verifier: string) {
+  function generateCodeChallenge(verifier) {
     // SHA-256 → base64url
     return crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier))
       .then(hash => {
@@ -32,14 +37,15 @@ export const useAuthStore = defineStore('auth', () => {
     const params = new URLSearchParams({
       client_id:     GITHUB_CLIENT_ID,
       redirect_uri:  REDIRECT_URI,
-      scope:         "user:email read:user repo", // нужные вам права
-      state:         crypto.randomUUID(),         // CSRF-защита
+      scope:         `user:${import.meta.env.VITE_GITHUB_EMAIL} read:user repo`,
+      state:         crypto.randomUUID(),
       code_challenge: codeChallenge,
       code_challenge_method: "S256"
     });
   
-    window.location.href = `https://github.com/login/oauth/authorize?${params}`;
+    window.location.href = `https://github.com/login/oauth/authorize?${params}`
   }
 
-  return { authGithub }
+  return { loginWithGitHub }
 })
+
