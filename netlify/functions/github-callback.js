@@ -34,7 +34,7 @@
 //     }
 //   }
 
-exports.handler = async function(event) {
+export async function handler(event) {
 
   const code = event.queryStringParameters.code
 
