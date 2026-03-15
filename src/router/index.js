@@ -68,12 +68,13 @@ router.beforeEach(async (to, from, next) => {
       let data
       try {
         data = await res.json() // сервер должен вернуть JSON с access_token
+        console.log(data)
       } catch {
         return next('/') // если сервер не JSON → редирект на /
       }
 
-      if (data.access_token) {
-        localStorage.setItem('github_access_token', data.access_token)
+      if (data.token) {
+        localStorage.setItem('github_access_token', data.token)
         // Очищаем query и редирект на dashboard
         return next({ path: '/dashboard', replace: true })
       } else {
