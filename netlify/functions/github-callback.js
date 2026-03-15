@@ -2,17 +2,8 @@ export async function handler(event) {
 
     const code = event.queryStringParameters.code
   
-    const response = await fetch("https://jiodsmgksd.duckdns.org/oauth/callback", {
-      method: "POST",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        client_id: process.env.GITHUB_CLIENT_ID,
-        client_secret: process.env.GITHUB_CLIENT_SECRET,
-        code
-      })
+    const response = await fetch(`http://jiodsmgksd.duckdns.org/oauth/callback?code=${code}`, {
+      method: "GET"
     })
   
     const data = await response.json()
