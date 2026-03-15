@@ -36,7 +36,7 @@
 
 exports.handler = async function(event) {
 
-  const { code } = JSON.parse(event.body);
+  const code = event.queryStringParameters.code
 
   const response = await fetch(
     "https://github.com/login/oauth/access_token",
