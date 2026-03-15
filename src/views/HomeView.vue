@@ -21,7 +21,7 @@ function logout() {
 const store = useAuthStore()
 
 const auth = async () => {
- await store.loginWithGitHub()
+ await store.login()
 }
 
 </script>
